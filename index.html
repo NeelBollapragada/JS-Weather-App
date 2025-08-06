@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="card">
+        <div class="search">
+            <input type="text" placeholder="Enter city name" spellcheck="false">
+            <button><img src="images/search.png"></button>
+        </div>
+        <div class="error">
+            <p>Invalid city or country!</p>
+        </div>   
+        <div class="weather">
+            <h2 class="city">New York</h2>
+            <div class="mainElements">
+                <img src="images/rain.png" class="weather-icon">
+                <div class="mainInfo">
+                    <h1 class="temp">22&deg;C</h1>
+                    <p class="feelsTemp">Feels like: 23&deg;</p>
+                    <p class="visibility">Visibility: 10km</p>
+                </div>
+            </div>
+            <div class="minorInfo">
+                <div class="col">
+                    <img src="images/sunrise.png">
+                    <p class="sunrise">Sunrise: 05:11</p>
+                </div>
+                <div class="col">
+                    <img src="images/sunset.png">
+                    <p class="sunset">Sunset: 20:38</p>
+                </div>
+            </div>
+            <div class="details">
+                <div class="col">
+                    <img src="images/humidity.png">
+                    <div>
+                        <p class="humidity">50%</p>
+                        <p>Humidity</p>
+                    </div>
+                </div>
+                <div class="col">
+                    <img src="images/wind.png">
+                    <div>
+                        <p class="wind">15 km/hr</p>
+                        <p class="direction">Wind Speed - NE</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const apiKey = "b7067eba507fcd957ab9e6bb13f84405";
+        const apiUrl = "https://api.openweathermap.org/data/2.5/weather?units=metric&q=";
+
+        const searchBox = document.querySelector(".search input");
+        const searchBtn = document.querySelector(".search button");
+    
+        function unixTime(num, offset) {
+            const date = new Date((num + offset- 3600) * 1000);
+
+            return date.toLocaleString().substring(12, 17);
+        }
+        
+        async function checkWeather(city) {
+            const response = await fetch(apiUrl + city + `&appid=${apiKey}`);
+            var data = await response.json();
+
+            if (response.status === 404) {
+                document.querySelector(".error").style.display = "block";
+                return;
+            }
+
+            document.querySelector(".error").style.display = "none";
+
+            document.querySelector(".city").innerHTML = data.name;
+            document.querySelector(".temp").innerHTML = `${Math.round(parseFloat(data.main.temp) * 10) / 10}&deg;C`;
+            document.querySelector(".humidity").innerHTML = `${data.main.humidity}%`;
+            document.querySelector(".wind").innerHTML = `${Math.round(parseFloat(data.wind.speed))} km/hr`;
+            document.querySelector(".weather-icon").src = `images/${data.weather[0].main.toLowerCase()}.png`;
+            document.querySelector(".feelsTemp").innerHTML = `Feels like: ${Math.round(parseFloat(data.main.feels_like) * 10) / 10}&deg;C`;
+            
+            const sunrise = unixTime(data.sys.sunrise, data.timezone);
+            const sunset = unixTime(data.sys.sunset, data.timezone);
+
+            document.querySelector(".sunrise").innerHTML = `Sunrise: ${sunrise}`;
+            document.querySelector(".sunset").innerHTML = `Sunset: ${sunset}`;
+
+            const bearings = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+
+            document.querySelector(".direction").innerHTML = `Wind Speed - ${bearings[Math.floor(((data.wind.deg + 22.5) % 360) / 45)]}`;
+            document.querySelector(".visibility").innerHTML = `Visibility: ${Math.round(data.visibility / 1000)}km`;
+
+            localStorage.setItem('lastCity', city);
+        }
+
+        searchBtn.addEventListener("click", () => {
+            checkWeather(searchBox.value);
+            searchBox.value = "";
+        })
+
+        searchBox.addEventListener("keydown", (event) => {
+            if (event.key === 'Enter') {
+                checkWeather(searchBox.value);
+                searchBox.value = "";
+            }
+        })
+
+        window.addEventListener("DOMContentLoaded", () => {
+            const savedCity = localStorage.getItem('lastCity');
+            const currCity = savedCity || "Glasgow";
+            checkWeather(currCity);
+        })
+    </script>
+
+</body>
+</html>
